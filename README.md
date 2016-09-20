@@ -11,6 +11,19 @@ This kernel is based on [bollwyvl/hy_kernel/](https://github.com/bollwyvl/hy_ker
 pip3 install git+https://github.com/Calysto/calysto_hy.git
 python3 -m calysto_hy install
 ```
+If installing into the system, you may want to:
+
+```shell
+sudo pip3 install git+https://github.com/Calysto/calysto_hy.git
+sudo python3 -m calysto_hy install
+```
+
+Or into your personal space:
+
+```shell
+pip3 install git+https://github.com/Calysto/calysto_hy.git --user
+python3 -m calysto_hy install --user
+```
 
 ## Use
 
@@ -18,4 +31,4 @@ python3 -m calysto_hy install
 jupyter console --kernel calysto_hy
 ```
 
-You can use Calysto Hy in Jupyter notebook by selecting the "Calysto Hy" kernel.
+You can use Calysto Hy in Jupyter notebook by selecting the "Calysto Hy" kernel. See example [notebooks](https://github.com/Calysto/calysto_hy/tree/master/notebooks).
