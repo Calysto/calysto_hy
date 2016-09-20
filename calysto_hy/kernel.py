@@ -31,7 +31,7 @@ class CalystoHy(MetaKernel):
         'name': 'hy',
         'mimetype': 'text/x-hylang',
         'codemirror_mode': {
-            'name': 'hy'
+            'name': 'scheme'
         },
         'pygments_lexer': 'lisp'
     }
@@ -65,17 +65,23 @@ class CalystoHy(MetaKernel):
         self.env["raw_input"] = self.raw_input
         self.env["read"] = self.raw_input
         self.env["input"] = self.raw_input
+        # Because using eval of mode="single":
+        sys.displayhook = self.displayhook
+
+    def displayhook(self, result):
+        self.result = result
 
     def do_execute_direct(self, code):
         '''
         '''
-        retval = None
+        self.result = None
         #### try to parse it:
         try:
             tokens = tokenize(code)
-            _ast = hy_compile(tokens, '__console__', root=ast.Interactive)
+            _ast = hy_compile(tokens, '', root=ast.Interactive)
             code = compile(_ast, "In [%s]" % self.execution_count, mode="single")
-            retval = eval(code, self.env)
+            # calls sys.displayhook:
+            eval(code, self.env)
         except Exception as e:
             self.Error(traceback.format_exc())
             self.kernel_resp.update({
@@ -85,7 +91,7 @@ class CalystoHy(MetaKernel):
                 'traceback' : [], # traceback frames as strings
             })
             return None
-        return retval
+        return self.result
 
     def get_completions(self, info):
         txt = info["help_obj"]
