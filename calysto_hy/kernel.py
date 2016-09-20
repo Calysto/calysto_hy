@@ -19,8 +19,15 @@ from .version import __version__
 
 from metakernel import MetaKernel
 
+try:
+    from IPython.core.latex_symbols import latex_symbols
+except:
+    latex_symbols = []
+
+
 class CalystoHy(MetaKernel):
     '''
+    A Jupyter kernel for Hy based on MetaKernel.
     '''
     implementation = 'hy'
     implementation_version = __version__
@@ -73,6 +80,7 @@ class CalystoHy(MetaKernel):
 
     def do_execute_direct(self, code):
         '''
+        Exceute the code, and return result.
         '''
         self.result = None
         #### try to parse it:
@@ -95,6 +103,10 @@ class CalystoHy(MetaKernel):
 
     def get_completions(self, info):
         txt = info["help_obj"]
+        # from latex
+        matches = latex_matches(txt)
+        if matches:
+            return matches
         matches = [word for word in self.env if word.startswith(txt)]
         for p in list(_hy_macros.values()) + [_compile_table]:
             p = filter(lambda x: isinstance(x, str), p.keys())
@@ -104,3 +116,21 @@ class CalystoHy(MetaKernel):
                 if x.startswith(txt) and x not in matches
             ])
         return matches
+
+def latex_matches(text):
+    """
+    Match Latex syntax for unicode characters.
+    After IPython.core.completer
+    """
+    slashpos = text.rfind('\\')
+    if slashpos > -1:
+        s = text[slashpos:]
+        if s in latex_symbols:
+            # Try to complete a full latex symbol to unicode
+            return [latex_symbols[s]]
+        else:
+            # If a user has partially typed a latex symbol, give them
+            # a full list of options \al -> [\aleph, \alpha]
+            matches = [k for k in latex_symbols if k.startswith(s)]
+            return matches
+    return []
