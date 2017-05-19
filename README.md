@@ -25,6 +25,13 @@ pip3 install git+https://github.com/Calysto/calysto_hy.git --user
 python3 -m calysto_hy install --user
 ```
 
+Or into a virtualenv, when it was already activate:
+
+```shell
+pip3 install git+https://github.com/Calysto/calysto_hy.git
+python3 -m calysto_hy install --sys-prefix
+```
+
 ## Use
 
 ```shell
