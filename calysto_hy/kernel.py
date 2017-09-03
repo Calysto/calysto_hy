@@ -60,10 +60,10 @@ class CalystoHy(MetaKernel):
         '''
         Create the hy environment
         '''
+        self.env = {}
         super(CalystoHy, self).__init__(*args, **kwargs)
         load_stdlib()
         [load_macros(m) for m in ['hy.core', 'hy.macros']]
-        self.env = {}
         if "str" in dir(__builtins__):
             self.env.update({key: getattr(__builtins__, key)
                              for key in dir(__builtins__)})
@@ -77,6 +77,12 @@ class CalystoHy(MetaKernel):
 
     def displayhook(self, result):
         self.result = result
+
+    def set_variable(self, var, value):
+        self.env[var] = value
+
+    def get_variable(self, var):
+        return self.env[var]
 
     def do_execute_direct(self, code):
         '''
