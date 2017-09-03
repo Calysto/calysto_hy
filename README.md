@@ -25,7 +25,7 @@ pip3 install git+https://github.com/Calysto/calysto_hy.git --user
 python3 -m calysto_hy install --user
 ```
 
-Or into a virtualenv, when it was already activate:
+Or into a virtualenv, when it is already activated:
 
 ```shell
 pip3 install git+https://github.com/Calysto/calysto_hy.git
