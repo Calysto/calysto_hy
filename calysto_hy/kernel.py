@@ -116,16 +116,6 @@ class CalystoHy(MetaKernel):
         return matches
 
 
-def extend_matches(matches, txt, completions):
-    for p in completions:
-        p = filter(lambda x: isinstance(x, str), p.keys())
-        p = [x.replace('_', '-') for x in p]
-        matches.extend([
-            x for x in p
-            if x.startswith(txt) and x not in matches
-        ])
-
-
 def latex_matches(text):
     """
     Match Latex syntax for unicode characters.
