@@ -19,6 +19,8 @@ from .version import __version__
 
 from metakernel import MetaKernel
 
+from jedhy import Actions
+
 try:
     from IPython.core.latex_symbols import latex_symbols
 except:
@@ -107,15 +109,22 @@ class CalystoHy(MetaKernel):
         matches = latex_matches(txt)
         if matches:
             return matches
-        matches = [word for word in self.env if word.startswith(txt)]
-        for p in list(_hy_macros.values()) + [_compile_table]:
-            p = filter(lambda x: isinstance(x, str), p.keys())
-            p = [x.replace('_', '-') for x in p]
-            matches.extend([
-                x for x in p
-                if x.startswith(txt) and x not in matches
-            ])
+
+        jedhy = Actions(globals_=self.env)
+        matches = jedhy.complete(txt)
+
         return matches
+
+
+def extend_matches(matches, txt, completions):
+    for p in completions:
+        p = filter(lambda x: isinstance(x, str), p.keys())
+        p = [x.replace('_', '-') for x in p]
+        matches.extend([
+            x for x in p
+            if x.startswith(txt) and x not in matches
+        ])
+
 
 def latex_matches(text):
     """
