@@ -20,9 +20,6 @@ setup(name='calysto_hy',
       author_email='doug.blank@gmail.com',
       url="https://github.com/Calysto/calysto_hy",
       install_requires=["metakernel", "hy"],
-      dependency_links=[
-          "git+https://github.com/ekaschalk/jedhy.git"
-      ],
       packages=find_packages(include=["calysto_hy", "calysto_hy.*"]),
       package_data={'calysto_hy': ["images/*.png", "modules/*.ss"]},
       classifiers=[
