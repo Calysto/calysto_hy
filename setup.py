@@ -22,7 +22,7 @@ setup(name='calysto_hy',
       install_requires=["metakernel", "hy"],
       packages=find_packages(include=["calysto_hy", "calysto_hy.*"]),
       package_data={'calysto_hy': ["images/*.png", "modules/*.ss"]},
-      classifiers = [
+      classifiers=[
           'Framework :: IPython',
           'License :: OSI Approved :: BSD License',
           'Programming Language :: Python :: 3',

@@ -19,10 +19,47 @@ from .version import __version__
 
 from metakernel import MetaKernel
 
+
 try:
     from IPython.core.latex_symbols import latex_symbols
 except:
     latex_symbols = []
+
+
+def create_jedhy_completer(env):
+    '''
+    Return code completions from jedhy.
+    '''
+    jedhy = Actions(globals_=env)
+    def complete(txt):
+        jedhy.set_namespace(globals_=env)
+        return jedhy.complete(txt)
+    return complete
+
+
+def create_fallback_completer(env):
+    '''
+    Return simple completions from env listing,
+    macros and compile table
+    '''
+    def complete(txt):
+        matches = [word for word in env if word.startswith(txt)]
+        for p in list(_hy_macros.values()) + [_compile_table]:
+            p = filter(lambda x: isinstance(x, str), p.keys())
+            p = [x.replace('_', '-') for x in p]
+            matches.extend([
+                x for x in p
+                if x.startswith(txt) and x not in matches
+            ])
+        return matches
+    return complete
+
+
+try:
+    from jedhy import Actions
+    create_completer = create_jedhy_completer
+except:
+    create_completer = create_fallback_completer
 
 
 class CalystoHy(MetaKernel):
@@ -74,6 +111,7 @@ class CalystoHy(MetaKernel):
         self.env["input"] = self.raw_input
         # Because using eval of mode="single":
         sys.displayhook = self.displayhook
+        self.complete = create_completer(self.env)
 
     def displayhook(self, result):
         self.result = result
@@ -113,15 +151,11 @@ class CalystoHy(MetaKernel):
         matches = latex_matches(txt)
         if matches:
             return matches
-        matches = [word for word in self.env if word.startswith(txt)]
-        for p in list(_hy_macros.values()) + [_compile_table]:
-            p = filter(lambda x: isinstance(x, str), p.keys())
-            p = [x.replace('_', '-') for x in p]
-            matches.extend([
-                x for x in p
-                if x.startswith(txt) and x not in matches
-            ])
+
+        matches = self.complete(txt)
+
         return matches
+
 
 def latex_matches(text):
     """
