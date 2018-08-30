@@ -47,7 +47,7 @@ def create_fallback_completer(env):
             _compile_table = []
 
         matches = [word for word in env if word.startswith(txt)]
-        for p in list(_hy_macros.values()) + [_compile_table]:
+        for p in list(_hy_macros.values()) + _compile_table:
             p = filter(lambda x: isinstance(x, str), p.keys())
             p = [x.replace('_', '-') for x in p]
             matches.extend([
