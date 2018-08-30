@@ -7,13 +7,21 @@ This kernel is based on [bollwyvl/hy_kernel/](https://github.com/bollwyvl/hy_ker
 
 ## Install
 
+If you want to enjoy full code completion by [kaschalk/jedhy](https://github.com/ekaschalk/jedhy) you have
+use bleeding edge and install hy master (> 0.13.1), jedhy and toolz first because jedhy is using new hy syntax.
+Otherwise calysto_hy falls back to is normal completion.
+
+
 ```shell
+pip3 install git+https://github.com/ekaschalk/jedhy.git
 pip3 install git+https://github.com/Calysto/calysto_hy.git
 python3 -m calysto_hy install
 ```
+
 If installing into the system, you may want to:
 
 ```shell
+sudo pip3 install git+https://github.com/ekaschalk/jedhy.git
 sudo pip3 install git+https://github.com/Calysto/calysto_hy.git
 sudo python3 -m calysto_hy install
 ```
@@ -21,6 +29,7 @@ sudo python3 -m calysto_hy install
 Or into your personal space:
 
 ```shell
+pip3 install git+https://github.com/ekaschalk/jedhy.git --user
 pip3 install git+https://github.com/Calysto/calysto_hy.git --user
 python3 -m calysto_hy install --user
 ```
@@ -28,6 +37,7 @@ python3 -m calysto_hy install --user
 Or into a virtualenv, when it is already activated:
 
 ```shell
+pip3 install git+https://github.com/ekaschalk/jedhy.git
 pip3 install git+https://github.com/Calysto/calysto_hy.git
 python3 -m calysto_hy install --sys-prefix
 ```

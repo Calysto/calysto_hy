@@ -1,0 +1,5 @@
+metakernel
+hy
+toolz
+git+https://github.com/Calysto/calysto_hy.git
+git+https://github.com/ekaschalk/jedhy.git

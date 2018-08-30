@@ -19,10 +19,13 @@ setup(name='calysto_hy',
       author='Douglas Blank',
       author_email='doug.blank@gmail.com',
       url="https://github.com/Calysto/calysto_hy",
-      install_requires=["metakernel", "hy"],
+      install_requires=["metakernel", "hy", "toolz"],
+      dependency_links=[
+          "git+https://github.com/ekaschalk/jedhy.git"
+      ],
       packages=find_packages(include=["calysto_hy", "calysto_hy.*"]),
       package_data={'calysto_hy': ["images/*.png", "modules/*.ss"]},
-      classifiers = [
+      classifiers=[
           'Framework :: IPython',
           'License :: OSI Approved :: BSD License',
           'Programming Language :: Python :: 3',
