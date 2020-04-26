@@ -10,7 +10,8 @@ import sys
 import traceback
 
 from hy.version import __version__ as hy_version
-from hy.macros import _hy_macros, load_macros
+from hy.macros import load_macros
+from hy import macros as _hy_macros
 from hy.lex import tokenize
 from hy.compiler import hy_compile
 from hy.core import language
@@ -99,9 +100,10 @@ class CalystoHy(MetaKernel):
         '''
         Create the hy environment
         '''
+        import hy
         self.env = {}
         super(CalystoHy, self).__init__(*args, **kwargs)
-        [load_macros(m) for m in ['hy.core', 'hy.macros']]
+        [load_macros(m) for m in [hy.core, hy.macros]]
         if "str" in dir(__builtins__):
             self.env.update({key: getattr(__builtins__, key)
                              for key in dir(__builtins__)})
