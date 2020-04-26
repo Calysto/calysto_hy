@@ -8,6 +8,7 @@ import __future__  # NOQA
 import ast
 import sys
 import traceback
+import hy
 
 from hy.version import __version__ as hy_version
 from hy.macros import load_macros
@@ -100,7 +101,6 @@ class CalystoHy(MetaKernel):
         '''
         Create the hy environment
         '''
-        import hy
         self.env = {}
         super(CalystoHy, self).__init__(*args, **kwargs)
         [load_macros(m) for m in [hy.core, hy.macros]]
@@ -133,10 +133,7 @@ class CalystoHy(MetaKernel):
         #### try to parse it:
         try:
             tokens = tokenize(code)
-            _ast = hy_compile(tokens, '', root=ast.Interactive)
-            code = compile(_ast, "In [%s]" % self.execution_count, mode="single")
-            # calls sys.displayhook:
-            eval(code, self.env)
+            self.result = hy.eval(tokens, locals=self.env)
         except Exception as e:
             self.Error(traceback.format_exc())
             self.kernel_resp.update({
