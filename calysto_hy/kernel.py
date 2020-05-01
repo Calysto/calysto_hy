@@ -10,12 +10,9 @@ import sys
 import traceback
 import hy
 
-from hy.version import __version__ as hy_version
 from hy.macros import load_macros
-from hy import macros as _hy_macros
 from hy.lex import tokenize
 from hy.compiler import hy_compile
-from hy.core import language
 from metakernel import MetaKernel
 
 from .version import __version__
@@ -73,7 +70,7 @@ class CalystoHy(MetaKernel):
     implementation = 'hy'
     implementation_version = __version__
     language = 'hy'
-    language_version = hy_version
+    language_version = hy.version
     banner = 'Hy is a wonderful dialect of Lisp that’s embedded in Python.'
     language_info = {
         'name': 'hy',
