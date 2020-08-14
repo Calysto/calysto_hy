@@ -125,7 +125,7 @@ class CalystoHy(MetaKernel):
 
     def do_execute_direct(self, code):
         '''
-        Exceute the code, and return result.
+        Execute the code, and return result.
         '''
         self.result = None
         #### try to parse it:
