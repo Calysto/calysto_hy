@@ -7,13 +7,14 @@ import __future__  # NOQA
 
 import ast
 import sys
+import types
 import traceback
+import hy.core
+import hy.macros
 
 from hy.version import __version__ as hy_version
-from hy.macros import _hy_macros, load_macros
-from hy.lex import tokenize
-from hy.compiler import hy_compile
-from hy.core import language
+from hy.compiler import hy_compile, HyASTCompiler
+from hy.lex import hy_parse
 from metakernel import MetaKernel
 
 from .version import __version__
@@ -47,7 +48,7 @@ def create_fallback_completer(env):
             _compile_table = []
 
         matches = [word for word in env if word.startswith(txt)]
-        for p in list(_hy_macros.values()) + _compile_table:
+        for p in list(hy.core.macros.__macros__.values()) + _compile_table:
             p = filter(lambda x: isinstance(x, str), p.keys())
             p = [x.replace('_', '-') for x in p]
             matches.extend([
@@ -101,7 +102,7 @@ class CalystoHy(MetaKernel):
         '''
         self.env = {}
         super(CalystoHy, self).__init__(*args, **kwargs)
-        [load_macros(m) for m in ['hy.core', 'hy.macros']]
+        [hy.macros.load_macros(m) for m in [hy.core, hy.macros]]
         if "str" in dir(__builtins__):
             self.env.update({key: getattr(__builtins__, key)
                              for key in dir(__builtins__)})
@@ -110,12 +111,14 @@ class CalystoHy(MetaKernel):
         self.env["raw_input"] = self.raw_input
         self.env["read"] = self.raw_input
         self.env["input"] = self.raw_input
-        # Because using eval of mode="single":
-        sys.displayhook = self.displayhook
         self.complete = create_completer(self.env)
-
-    def displayhook(self, result):
-        self.result = result
+        self.locals = {"__name__": "__console__", "__doc__": None}
+        module_name = self.locals.get('__name__', '__console__')
+        self.module = sys.modules.setdefault(module_name,
+                                             types.ModuleType(module_name))
+        self.module.__dict__.update(self.locals)
+        self.locals = self.module.__dict__
+        self.hy_compiler = HyASTCompiler(self.module)
 
     def set_variable(self, var, value):
         self.env[var] = value
@@ -125,16 +128,23 @@ class CalystoHy(MetaKernel):
 
     def do_execute_direct(self, code):
         '''
-        Exceute the code, and return result.
+        Execute the code, and return result.
         '''
         self.result = None
         #### try to parse it:
         try:
-            tokens = tokenize(code)
-            _ast = hy_compile(tokens, '', root=ast.Interactive)
-            code = compile(_ast, "In [%s]" % self.execution_count, mode="single")
-            # calls sys.displayhook:
-            eval(code, self.env)
+            filename = "In [%s]" % self.execution_count
+            hy_ast = hy_parse(code, filename=filename)
+            exec_ast, eval_ast = hy_compile(hy_ast, self.module,
+                                            root=ast.Interactive,
+                                            get_expr=True,
+                                            compiler=self.hy_compiler,
+                                            filename=filename, source=code)
+            exec_code = compile(exec_ast, filename, 'single')
+            eval_code = compile(eval_ast, filename, 'eval')
+            eval(exec_code, self.locals)
+            self.result = eval(eval_code, self.locals)
+
         except Exception as e:
             self.Error(traceback.format_exc())
             self.kernel_resp.update({
