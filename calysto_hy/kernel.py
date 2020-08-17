@@ -111,11 +111,7 @@ class CalystoHy(MetaKernel):
         self.env["raw_input"] = self.raw_input
         self.env["read"] = self.raw_input
         self.env["input"] = self.raw_input
-        # Because using eval of mode="single":
-        sys.displayhook = self.displayhook
-
         self.complete = create_completer(self.env)
-
         self.locals = {"__name__": "__console__", "__doc__": None}
         module_name = self.locals.get('__name__', '__console__')
         self.module = sys.modules.setdefault(module_name,
@@ -123,9 +119,6 @@ class CalystoHy(MetaKernel):
         self.module.__dict__.update(self.locals)
         self.locals = self.module.__dict__
         self.hy_compiler = HyASTCompiler(self.module)
-
-    def displayhook(self, result):
-        self.result = result
 
     def set_variable(self, var, value):
         self.env[var] = value
