@@ -48,6 +48,7 @@ def create_fallback_completer(env, module):
         if "." not in txt:
             names = set()
             try:
+                names |= set(env)
                 names |= set(dir(module))
                 names |= set(hy.core.macros.__macros__) # type: ignore
                 names |= set(hy.core.result_macros.__macros__) # type: ignore
