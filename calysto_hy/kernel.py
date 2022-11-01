@@ -6,15 +6,16 @@ from __future__ import print_function
 import __future__  # NOQA
 
 import ast
+import io
 import sys
 import types
 import traceback
 import hy.core
 import hy.macros
+import hy.reader
 
 from hy.version import __version__ as hy_version
 from hy.compiler import hy_compile, HyASTCompiler
-from hy.lex import hy_parse
 from metakernel import MetaKernel
 
 from .version import __version__
@@ -24,7 +25,7 @@ try:
 except:
     latex_symbols = []
 
-def create_jedhy_completer(env):
+def create_jedhy_completer(env, module):
     '''
     Return code completions from jedhy.
     '''
@@ -35,27 +36,43 @@ def create_jedhy_completer(env):
     return complete
 
 
-def create_fallback_completer(env):
+def create_fallback_completer(env, module):
     '''
     Return simple completions from env listing,
     macros and compile table
     '''
     def complete(txt):
-        try:
-            from hy.compiler import _compile_table, load_stdlib
-            load_stdlib()
-        except:
-            _compile_table = []
+        if "." not in txt:
+            names = set()
+            try:
+                names |= set(env)
+                names |= set(dir(module))
+                names |= set(hy.core.macros.__macros__) # type: ignore
+                names |= set(hy.core.result_macros.__macros__) # type: ignore
+            except:
+                pass
 
-        matches = [word for word in env if word.startswith(txt)]
-        for p in list(hy.core.macros.__macros__.values()) + _compile_table:
-            p = filter(lambda x: isinstance(x, str), p.keys())
-            p = [x.replace('_', '-') for x in p]
-            matches.extend([
-                x for x in p
-                if x.startswith(txt) and x not in matches
-            ])
-        return matches
+            return [
+                hy.reader.unmangle(word)
+                for word in sorted(names)
+                if word.startswith(txt)
+            ]
+        
+        else:
+            parts = txt.split(".")
+            obj = module
+            for part in parts[:-1]:
+                try:
+                    obj = getattr(obj, part)
+                except:
+                    return []
+            
+            return [
+                ".".join(parts[:-1]) + "." + hy.reader.unmangle(part)
+                for part in dir(obj)
+                if part.startswith(parts[-1])
+            ]
+
     return complete
 
 try:
@@ -111,7 +128,6 @@ class CalystoHy(MetaKernel):
         self.env["raw_input"] = self.raw_input
         self.env["read"] = self.raw_input
         self.env["input"] = self.raw_input
-        self.complete = create_completer(self.env)
         self.locals = {"__name__": "__console__", "__doc__": None}
         module_name = self.locals.get('__name__', '__console__')
         self.module = sys.modules.setdefault(module_name,
@@ -119,6 +135,7 @@ class CalystoHy(MetaKernel):
         self.module.__dict__.update(self.locals)
         self.locals = self.module.__dict__
         self.hy_compiler = HyASTCompiler(self.module)
+        self.complete = create_completer(self.env, self.module)
 
     def set_variable(self, var, value):
         self.env[var] = value
@@ -134,16 +151,20 @@ class CalystoHy(MetaKernel):
         #### try to parse it:
         try:
             filename = "In [%s]" % self.execution_count
-            hy_ast = hy_parse(code, filename=filename)
-            exec_ast, eval_ast = hy_compile(hy_ast, self.module,
-                                            root=ast.Interactive,
-                                            get_expr=True,
-                                            compiler=self.hy_compiler,
-                                            filename=filename, source=code)
-            exec_code = compile(exec_ast, filename, 'single')
-            eval_code = compile(eval_ast, filename, 'eval')
-            eval(exec_code, self.locals)
-            self.result = eval(eval_code, self.locals)
+            hy_parser = hy.reader.HyReader()
+            hy_asts = hy_parser.parse(io.StringIO(code), filename=filename)
+            for hy_ast in hy_asts:
+                ret = hy_compile(hy_ast, self.module,
+                                         root=ast.Interactive,
+                                         get_expr=True,
+                                         compiler=self.hy_compiler,
+                                         filename=filename, source=code)
+                assert isinstance(ret, tuple)
+                exec_ast, eval_ast = ret
+                exec_code = compile(exec_ast, filename, 'single')
+                eval_code = compile(eval_ast, filename, 'eval')
+                eval(exec_code, self.locals)
+                self.result = eval(eval_code, self.locals)
 
         except Exception as e:
             self.Error(traceback.format_exc())
