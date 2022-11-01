@@ -29,9 +29,12 @@ def create_jedhy_completer(env, module):
     '''
     Return code completions from jedhy.
     '''
-    jedhy = Actions(globals_=env)
+    globals_ = {}
+    globals_.update(env)
+    globals_.update(module.__dict__)
+    jedhy = Actions(globals_=globals_)
     def complete(txt):
-        jedhy.set_namespace(globals_=env)
+        jedhy.set_namespace(globals_=globals_)
         return jedhy.complete(txt)
     return complete
 
@@ -45,7 +48,6 @@ def create_fallback_completer(env, module):
         if "." not in txt:
             names = set()
             try:
-                names |= set(env)
                 names |= set(dir(module))
                 names |= set(hy.core.macros.__macros__) # type: ignore
                 names |= set(hy.core.result_macros.__macros__) # type: ignore
@@ -118,30 +120,32 @@ class CalystoHy(MetaKernel):
         Create the hy environment
         '''
         self.env = {}
+        self.locals = {
+            "__name__": "__console__",
+            "__doc__": None,
+            "input": self.raw_input
+        }
+        module_name = self.locals.get('__name__', '__console__')
+        self.module = sys.modules.setdefault(module_name,
+                                             types.ModuleType(module_name))
+
         super(CalystoHy, self).__init__(*args, **kwargs)
-        [hy.macros.load_macros(m) for m in [hy.core, hy.macros]]
+
         if "str" in dir(__builtins__):
             self.env.update({key: getattr(__builtins__, key)
                              for key in dir(__builtins__)})
         if "keys" in dir(__builtins__):
             self.env.update(__builtins__)
-        self.env["raw_input"] = self.raw_input
-        self.env["read"] = self.raw_input
-        self.env["input"] = self.raw_input
-        self.locals = {"__name__": "__console__", "__doc__": None}
-        module_name = self.locals.get('__name__', '__console__')
-        self.module = sys.modules.setdefault(module_name,
-                                             types.ModuleType(module_name))
         self.module.__dict__.update(self.locals)
         self.locals = self.module.__dict__
         self.hy_compiler = HyASTCompiler(self.module)
         self.complete = create_completer(self.env, self.module)
 
     def set_variable(self, var, value):
-        self.env[var] = value
+        setattr(self.module, var, value)
 
     def get_variable(self, var):
-        return self.env[var]
+        return getattr(self.module, var)
 
     def do_execute_direct(self, code):
         '''
@@ -155,7 +159,7 @@ class CalystoHy(MetaKernel):
             hy_asts = hy_parser.parse(io.StringIO(code), filename=filename)
             for hy_ast in hy_asts:
                 ret = hy_compile(hy_ast, self.module,
-                                         root=ast.Interactive,
+                                         root=ast.Interactive, # type: ignore
                                          get_expr=True,
                                          compiler=self.hy_compiler,
                                          filename=filename, source=code)
