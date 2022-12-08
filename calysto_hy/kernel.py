@@ -10,6 +10,7 @@ import io
 import sys
 import types
 import traceback
+import hy
 import hy.core
 import hy.macros
 import hy.reader
@@ -192,6 +193,9 @@ class CalystoHy(MetaKernel):
         matches = self.complete(txt)
 
         return matches
+
+    def repr(self, obj):
+        return hy.repr(obj)
 
 
 def latex_matches(text):
